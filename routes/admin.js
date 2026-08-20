@@ -1,6 +1,4 @@
 const express = require('express');
-const path = require('path');
-const rootDir = require('../util/path');
 
 // create a router object that we can add routes to
 const router = express.Router();
@@ -10,7 +8,7 @@ const products = [];
 router.get('/add-product', (req, res, next) => {
     // res.send("<form action='/admin/add-product' method='POST'><input type='text' name='title'><button type='submit'>Add Product</button></form>");
     // res.sendFile(path.join(rootDir, 'views', 'add-product.html'));
-    res.render('add-product.pug', {pageTitle: 'Add product', path: '/admin/add-product', formsCSS: true, productCSS: true, activeAddProduct: true});
+    res.render('add-product', {pageTitle: 'Add product', path: '/admin/add-product', formsCSS: true, productCSS: true, activeAddProduct: true});
     // do not call next after response!!
 })
 
