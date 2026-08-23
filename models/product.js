@@ -1,9 +1,18 @@
-// constructor function
-// module.exports = function Product() {
+const fs = require('fs');
+const path = require('path');
 
-// }
+const p = path.join(path.dirname(process.mainModule.filename), 'data', 'products.json');
 
-const products = [];
+const getProductsFromFile = (cb) => {
+    fs.readFile(p, (err, fileContent) => {
+        if (err) {
+            // return [];
+            return cb([]);
+        }
+
+        cb(JSON.parse(fileContent));
+    });
+};
 
 module.exports = class Product {
     constructor(t) {
@@ -12,11 +21,20 @@ module.exports = class Product {
 
     save() {
         // it will refer to the object created based on the class
-        products.push(this);
+        // products.push(this);
+        getProductsFromFile((products) => {
+            // we must use an arrow function for this!
+            products.push(this);
+
+            //takes JS and converts it to json
+            fs.writeFile(p, JSON.stringify(products), (err) => {
+                console.log(err);
+            });
+        });
     }
 
     // makes sure we can call this directly on the class itself and not on an instatiated object
-    static fetchAll() {
-        return products;
+    static fetchAll(cb) {
+        getProductsFromFile(cb);
     }
-}
+};
