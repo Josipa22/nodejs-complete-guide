@@ -23,6 +23,7 @@ module.exports = class Product {
     }
 
     save() {
+        this.id = Math.random().toString();
         // it will refer to the object created based on the class
         // products.push(this);
         getProductsFromFile((products) => {
@@ -39,5 +40,12 @@ module.exports = class Product {
     // makes sure we can call this directly on the class itself and not on an instatiated object
     static fetchAll(cb) {
         getProductsFromFile(cb);
+    }
+
+    static findById(id, cb) {
+        getProductsFromFile(products => {
+            const product = products.find(p => p.id.toString() === id);
+            cb(product);
+        })
     }
 };
