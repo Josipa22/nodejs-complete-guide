@@ -3,26 +3,27 @@ const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
     // takes a function it should execute once it's done
-    Product.fetchAll()
-        .then(([rows, fieldData]) => {
+    Product.findAll()
+        .then((products) => {
             res.render('shop/product-list', {
-                prods: rows,
-                pageTitle: 'All products',
-                path: '/products',
+                prods: products,
+                pageTitle: 'All Products',
+                path: '/',
+                hasProducts: products.length > 0,
+                activeShop: true,
+                productCSS: true,
             });
         })
-        .catch((err) => {
-            console.log(err);
-        });
+        .catch((err) => console.log(err));
 };
 
 exports.getProduct = (req, res, next) => {
     const prodId = req.params.productId;
-    Product.findById(prodId)
-        .then(([rows]) => {
+    Product.findByPk(prodId)
+        .then((product) => {
             res.render('shop/product-detail', {
-                pageTitle: rows[0].title,
-                product: rows[0],
+                pageTitle: product.title,
+                product: product,
                 path: '/products',
             });
         })
@@ -30,13 +31,13 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
-    Product.fetchAll()
-        .then(([rows, fieldData]) => {
+    Product.findAll()
+        .then((products) => {
             res.render('shop/index', {
-                prods: rows,
+                prods: products,
                 pageTitle: 'Shop',
                 path: '/',
-                hasProducts: rows.length > 0,
+                hasProducts: products.length > 0,
                 activeShop: true,
                 productCSS: true,
             });
