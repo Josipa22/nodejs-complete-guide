@@ -16,6 +16,8 @@ const User = require('./models/user');
 
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
+const Cart = require('./models/cart');
+const CartItem = require('./models/cart-item');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -42,6 +44,10 @@ Product.belongsTo(User, {
 });
 // optional, can replace belongsTo
 User.hasMany(Product);
+User.hasOne(Cart);
+Cart.belongsTo(User);
+Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem });
 
 // syncs your models to the db by creating the appropriate tables and relations
 // npm start runs sequelize, not incoming requests
@@ -61,7 +67,10 @@ sequelize
         return user;
     })
     .then((user) => {
-        console.log(user);
+        // console.log(user);
+        return user.createCart();
+    })
+    .then((cart) => {
         app.listen(3000);
     })
     .catch((err) => console.log(err));
