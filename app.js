@@ -18,6 +18,8 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const Cart = require('./models/cart');
 const CartItem = require('./models/cart-item');
+const Order = require('./models/order');
+const OrderItem = require('./models/order-item');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -48,6 +50,9 @@ User.hasOne(Cart);
 Cart.belongsTo(User);
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
+Order.belongsTo(User);
+User.hasMany(Order);
+Order.belongsToMany(Product, { through: OrderItem });
 
 // syncs your models to the db by creating the appropriate tables and relations
 // npm start runs sequelize, not incoming requests
@@ -60,7 +65,7 @@ sequelize
     })
     .then((user) => {
         if (!user) {
-            User.create({ name: 'Max', email: 'test@test.com' });
+            return User.create({ name: 'Max', email: 'test@test.com' });
         }
         // if you return value in then block, it's automatically wrapped in a new promise
         // return Promise.resolve(user);
