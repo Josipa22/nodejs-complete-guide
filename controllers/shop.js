@@ -1,5 +1,4 @@
 const Product = require('../models/product');
-const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
     // takes a function it should execute once it's done
@@ -97,22 +96,56 @@ exports.postCartDeleteProduct = (req, res, next) => {
         .then((cart) => {
             return cart.getProducts({ where: { id: prodId } });
         })
-        .then(products => {
+        .then((products) => {
             const product = products[0];
             // sequelize allows to access element in the in-between table
-            return product.cartItem.destroy()
+            return product.cartItem.destroy();
         })
-        .then(result => {
+        .then((result) => {
             res.redirect('/cart');
         })
-        .catch(err => console.log(err));
+        .catch((err) => console.log(err));
+};
+
+exports.postOrder = (req, res, next) => {
+    let fetchedCart;
+    req.user
+        .getCart()
+        .then((cart) => {
+            fetchedCart = cart;
+            return cart.getProducts();
+        })
+        .then((products) => {
+            return req.user
+                .createOrder()
+                .then((order) => {
+                    return order.addProducts(
+                        products.map((product) => {
+                            product.orderItem = {
+                                quantity: product.cartItem.quantity,
+                            };
+                            return product;
+                        }),
+                    );
+                })
+                .catch((err) => console.log(err));
+        })
+        .then((result) => fetchedCart.setProducts(null))
+        .then((result) => res.redirect('/orders'))
+        .catch((err) => console.log(err));
 };
 
 exports.getOrders = (req, res, next) => {
-    res.render('shop/orders', {
-        path: '/orders',
-        pageTitle: 'Your orders',
-    });
+    req.user
+        .getOrders({ include: ['products'] })
+        .then((orders) => {
+            res.render('shop/orders', {
+                path: '/orders',
+                pageTitle: 'Your orders',
+                orders: orders
+            });
+        })
+        .catch((err) => console.log(err));
 };
 
 exports.getCheckout = (req, res, next) => {
