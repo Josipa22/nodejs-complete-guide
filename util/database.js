@@ -1,9 +1,28 @@
-const Sequelize = require('sequelize');
+const { MongoClient } = require('mongodb');
 
-// the constructor function needs some options
-const sequelize = new Sequelize('node-complete', 'root', 'NewPass123!', {
-    dialect: 'mysql', 
-    host: 'localhost'
-});
+let _db;
 
-module.exports = sequelize;
+const mongoConnect = (callback) => {
+    MongoClient.connect(process.env.MONGODB_URI)
+        .then((client) => {
+            console.log('Connected!');
+            _db = client.db();
+            callback(client);
+        })
+        .catch((err) => {
+            console.log(err);
+            throw err;
+        });
+};
+
+// return access to that connected db (if it exists)
+const getDb = () => {
+    if (_db) {
+        return _db;
+    }
+
+    throw 'No database found';
+}
+
+exports.mongoConnect = mongoConnect;
+exports.getDb = getDb;
