@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 
 const errorController = require('./controllers/error');
 const mongoConnect = require('./util/database.js').mongoConnect;
+const User = require('./models/user.js');
 
 const app = express();
 
@@ -22,12 +23,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // only registers a middleware
 // will only run for incoming requests
 app.use((req, res, next) => {
-    // User.findByPk(1)
-    //     .then((user) => {
-    //         req.user = user;
-    next();
-    //     })
-    //     .catch((err) => console.log(err));
+    User.findById('6ae1029611ea1f57193b8ce0')
+        .then((user) => {
+            req.user = user;
+            next();
+        })
+        .catch((err) => console.log(err));
 });
 
 app.use('/admin', adminRoutes);
