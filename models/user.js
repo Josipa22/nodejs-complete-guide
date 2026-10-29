@@ -7,7 +7,7 @@ class User {
         this.name = username;
         this.email = email;
         this._id = id ? new ObjectId(id) : undefined;
-        this.cart = cart; // { items: []}
+        this.cart = cart || { items: [] }; // { items: []}
     }
 
     save() {
@@ -25,16 +25,82 @@ class User {
     }
 
     addToCart(product) {
-        // const cartProduct = this.cart.items.findIndex((cp) => {
-        //     return cp._id === product._id;
-        // });
+        // if it's not -1, the product exists
+        const cartProductIndex = this.cart.items.findIndex((cp) => {
+            // product._id treated as a string but it is not of type string, we can just use it as such
+            return cp.productId.toString() === product._id.toString();
+        });
 
-        // product.quantity = 1;
-        const updatedCart = { items: [{ ...product, quantity: 1 }] };
+        let newQuantity = 1;
+        const updatedCartItems = [...this.cart.items];
+
+        if (cartProductIndex >= 0) {
+            newQuantity = this.cart.items[cartProductIndex].quantity + 1;
+            updatedCartItems[cartProductIndex].quantity = newQuantity;
+        } else {
+            updatedCartItems.push({ productId: new ObjectId(product._id), quantity: newQuantity });
+        }
+
+        const updatedCart = {
+            items: updatedCartItems,
+        };
+
         const db = getDb();
         return db
             .collection('users')
             .updateOne({ _id: new ObjectId(this._id) }, { $set: { cart: updatedCart } });
+    }
+
+    getCart() {
+        // return the fully populated cart
+        const db = getDb();
+        const productIds = this.cart.items.map((i) => {
+            return i.productId;
+        });
+
+        return db
+            .collection('products')
+            .find({ _id: { $in: productIds } })
+            .toArray()
+            .then((products) => {
+                // make sure to use arrow functions!
+                return products.map((p) => {
+                    return {
+                        ...p,
+                        quantity: this.cart.items.find((i) => {
+                            return i.productId.toString() === p._id.toString();
+                        }).quantity,
+                    };
+                });
+            });
+    }
+
+    deleteItemFromCart(productId) {
+        const updatedCartItems = this.cart.items.filter((item) => {
+            return item.productId.toString() !== productId.toString();
+        });
+
+        const db = getDb();
+        return db
+            .collection('users')
+            .updateOne(
+                { _id: new ObjectId(this._id) },
+                { $set: { cart: { items: updatedCartItems } } },
+            );
+    }
+
+    // cart is already registered on this user
+    addOrder() {
+        const db = getDb();
+        return db
+            .collection('orders')
+            .insertOne(this.cart)
+            .then((result) => {
+                this.cart = { items: [] };
+                return db
+                    .collection('users')
+                    .updateOne({ _id: new ObjectId(this._id) }, { $set: { cart: { items: [] } } });
+            });
     }
 
     static findById(userId) {

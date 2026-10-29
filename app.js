@@ -23,9 +23,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // only registers a middleware
 // will only run for incoming requests
 app.use((req, res, next) => {
-    User.findById('6ae1029611ea1f57193b8ce0')
+    User.findById('6ae382c5b25ff94b3294eaba')
         .then((user) => {
-            req.user = user;
+            req.user = new User(user.name, user.email, user._id, user.cart);
             next();
         })
         .catch((err) => console.log(err));
