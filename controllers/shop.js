@@ -1,13 +1,14 @@
 const Product = require('../models/product');
 
 exports.getProducts = (req, res, next) => {
-    // takes a function it should execute once it's done
-    Product.fetchAll()
+    // it gives us the products when using mongoose
+    Product.find()
         .then((products) => {
+            console.log(products);
             res.render('shop/product-list', {
                 prods: products,
                 pageTitle: 'All Products',
-                path: '/',
+                path: '/products',
                 hasProducts: products.length > 0,
                 activeShop: true,
                 productCSS: true,
@@ -18,6 +19,7 @@ exports.getProducts = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
     const prodId = req.params.productId;
+    // we can even pass a string instead of number
     Product.findById(prodId)
         .then((product) => {
             if (!product) {
@@ -33,7 +35,7 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
-    Product.fetchAll()
+    Product.find()
         .then((products) => {
             res.render('shop/index', {
                 prods: products,
