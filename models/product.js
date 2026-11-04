@@ -21,6 +21,12 @@ const productSchema = new Schema({
         type: String,
         required: true,
     },
+    userId: {
+        type: Schema.Types.ObjectId,
+        // which other mongoose model is actually related to the data in that field
+        ref: 'User',
+        required: true,
+    },
 });
 
 // a function we call to connect a schema with a name (you give that model a name)

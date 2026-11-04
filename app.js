@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const errorController = require('./controllers/error');
-// const User = require('./models/user.js');
+const User = require('./models/user.js');
 
 const app = express();
 
@@ -22,14 +22,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // only registers a middleware
 // will only run for incoming requests
-// app.use((req, res, next) => {
-//     User.findById('6ae382c5b25ff94b3294eaba')
-//         .then((user) => {
-//             req.user = new User(user.name, user.email, user._id, user.cart);
-//             next();
-//         })
-//         .catch((err) => console.log(err));
-// });
+app.use((req, res, next) => {
+    User.findById('6aeb6af6b7e2d46640d726ac')
+        .then((user) => {
+            // with mongoose, findById already returns a full User document
+            req.user = user;
+            next();
+        })
+        .catch((err) => console.log(err));
+});
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
@@ -39,6 +40,19 @@ app.use(errorController.get404);
 mongoose
     .connect(process.env.MONGODB_URI)
     .then((result) => {
+        User.findOne().then((user) => {
+            if (!user) {
+                const user = new User({
+                    name: 'Josipa',
+                    email: 'jops@gmail.com',
+                    cart: {
+                        items: [],
+                    },
+                });
+                user.save();
+            }
+        });
+
         app.listen(3000);
     })
     .catch((err) => console.log(err));

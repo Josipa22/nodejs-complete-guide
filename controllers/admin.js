@@ -13,7 +13,8 @@ exports.postAddProduct = (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const price = req.body.price;
     const description = req.body.description;
-    const product = new Product({ title, price, description, imageUrl });
+    // mongoose will just pick the id from req.user object
+    const product = new Product({ title, price, description, imageUrl, userId: req.user });
     product
         .save()
         .then((result) => {
