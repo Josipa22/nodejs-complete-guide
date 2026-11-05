@@ -73,6 +73,8 @@ exports.postEditProduct = (req, res, next) => {
 
 exports.getProducts = (req, res, next) => {
     Product.find()
+        // .select('title price -_id')
+        // .populate('userId', 'name') //the id will always be retrieved unless specifically excluded
         .then((products) => {
             res.render('admin/products', {
                 prods: products,
