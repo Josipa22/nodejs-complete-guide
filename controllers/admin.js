@@ -2,6 +2,7 @@ const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
     res.render('admin/edit-product', {
+        isAuthenticated: req.isLoggedIn,
         pageTitle: 'Add product',
         path: '/admin/add-product',
         editing: false,
@@ -37,6 +38,7 @@ exports.getEditProduct = (req, res, next) => {
             }
 
             res.render('admin/edit-product', {
+                isAuthenticated: req.isLoggedIn,
                 pageTitle: 'Edit product',
                 path: '/admin/edit-product',
                 editing: editMode === 'true',
@@ -77,6 +79,7 @@ exports.getProducts = (req, res, next) => {
         // .populate('userId', 'name') //the id will always be retrieved unless specifically excluded
         .then((products) => {
             res.render('admin/products', {
+                isAuthenticated: req.isLoggedIn,
                 prods: products,
                 pageTitle: 'Admin Products',
                 path: '/admin/products',
