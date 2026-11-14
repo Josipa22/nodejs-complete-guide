@@ -30,18 +30,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({ secret: 'my secret', resave: false, saveUninitialized: false, store }));
 
-// only registers a middleware
-// will only run for incoming requests
-app.use((req, res, next) => {
-    User.findById('6aeb6af6b7e2d46640d726ac')
-        .then((user) => {
-            // with mongoose, findById already returns a full User document
-            req.user = user;
-            next();
-        })
-        .catch((err) => console.log(err));
-});
-
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);

@@ -2,7 +2,7 @@ const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
     res.render('admin/edit-product', {
-        isAuthenticated: req.isLoggedIn,
+        isAuthenticated: req.session.isLoggedIn,
         pageTitle: 'Add product',
         path: '/admin/add-product',
         editing: false,
@@ -14,8 +14,8 @@ exports.postAddProduct = (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const price = req.body.price;
     const description = req.body.description;
-    // mongoose will just pick the id from req.user object
-    const product = new Product({ title, price, description, imageUrl, userId: req.user });
+    // mongoose will just pick the id from req.session.user object
+    const product = new Product({ title, price, description, imageUrl, userId: req.session.user });
     product
         .save()
         .then((result) => {
@@ -38,7 +38,7 @@ exports.getEditProduct = (req, res, next) => {
             }
 
             res.render('admin/edit-product', {
-                isAuthenticated: req.isLoggedIn,
+                isAuthenticated: req.session.isLoggedIn,
                 pageTitle: 'Edit product',
                 path: '/admin/edit-product',
                 editing: editMode === 'true',
@@ -79,7 +79,7 @@ exports.getProducts = (req, res, next) => {
         // .populate('userId', 'name') //the id will always be retrieved unless specifically excluded
         .then((products) => {
             res.render('admin/products', {
-                isAuthenticated: req.isLoggedIn,
+                isAuthenticated: req.session.isLoggedIn,
                 prods: products,
                 pageTitle: 'Admin Products',
                 path: '/admin/products',
