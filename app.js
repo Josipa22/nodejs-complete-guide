@@ -14,6 +14,7 @@ const User = require('./models/user.js');
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const app = express();
+// does not know about mongoose
 const store = new MongoDBStore({
     uri: MONGODB_URI,
     collection: 'sessions',
@@ -29,6 +30,19 @@ const authRoutes = require('./routes/auth');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({ secret: 'my secret', resave: false, saveUninitialized: false, store }));
+
+app.use((req, res, next) => {
+    if (!req.session.user) {
+        return next();
+    }
+    User.findById(req.session.user._id)
+        .then((user) => {
+            // we just want to create out mongoose user model, the session already exists
+            req.user = user;
+            next();
+        })
+        .catch((err) => console.log(err));
+});
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
