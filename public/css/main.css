@@ -230,3 +230,21 @@ form {
         display: none;
     }
 }
+
+.user-message {
+    margin: 1rem auto;
+    width: 20rem;
+    max-width: 90%;
+    padding: 0.5rem;
+    border: 1px solid #00695c;
+    border-radius: 3px;
+    background: #e0f2f1;
+    color: #00695c;
+    text-align: center;
+}
+
+.user-message--error {
+    border-color: #b71c1c;
+    background: #ffebee;
+    color: #b71c1c;
+}
