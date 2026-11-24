@@ -33,7 +33,8 @@ exports.getEditProduct = (req, res, next) => {
     const prodId = req.params.productId;
     Product.findById(prodId)
         .then((product) => {
-            if (!product) {
+            // only the user who created the product can see the edit form
+            if (!product || product.userId.toString() !== req.user._id.toString()) {
                 return res.redirect('/');
             }
 
@@ -57,24 +58,27 @@ exports.postEditProduct = (req, res, next) => {
 
     Product.findById(prodId)
         .then((product) => {
+            // only the user who created the product can edit it
+            if (!product || product.userId.toString() !== req.user._id.toString()) {
+                return res.redirect('/');
+            }
             product.title = updatedTitle;
             product.price = updatedPrice;
             product.description = updatedDescription;
             product.imageUrl = updatedImageUrl;
 
             //automatic update if on existing object
-            return product.save();
-        })
-        .then((result) => {
-            console.log('Updated product!');
-            // we only redirect after update was successful!
-            res.redirect('/admin/products');
+            return product.save().then((result) => {
+                console.log('Updated product!');
+                // we only redirect after update was successful!
+                res.redirect('/admin/products');
+            });
         })
         .catch((err) => console.log(err));
 };
 
 exports.getProducts = (req, res, next) => {
-    Product.find()
+    Product.find({ userId: req.user._id })
         // .select('title price -_id')
         // .populate('userId', 'name') //the id will always be retrieved unless specifically excluded
         .then((products) => {
@@ -90,7 +94,8 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findByIdAndDelete(prodId)
+    // only deletes the product if it belongs to the logged-in user
+    Product.deleteOne({ _id: prodId, userId: req.user._id })
         .then(() => {
             console.log('DESTROYED PRODUCT');
             res.redirect('/admin/products');
