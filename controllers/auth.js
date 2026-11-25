@@ -45,47 +45,51 @@ exports.getSignup = (req, res, next) => {
 };
 
 exports.postLogin = (req, res, next) => {
-    const email = req.body.email;
     const password = req.body.password;
+    const renderLoginError = (message) =>
+        res.status(422).render('auth/login', {
+            path: '/login',
+            pageTitle: 'Login',
+            errorMessage: message,
+        });
 
-    User.findOne({ email }).then((user) => {
-        if (!user) {
-            req.flash('error', 'Invalid email or password');
-            return res.redirect('/login');
-        }
-        bcrypt
-            .compare(password, user.password)
-            .then((doMatch) => {
-                // will be true if passwords match, otherwise false
-                if (doMatch) {
-                    req.session.isLoggedIn = true;
-                    // store a plain copy with ObjectIds as strings: the session store bundles an older
-                    // bson version and refuses to save the ObjectIds of our mongoose version
-                    // we share it across requests
-                    req.session.user = user.toObject({ flattenObjectIds: true });
-                    // make sure the session is written to MongoDB before we redirect
-                    return req.session.save((err) => {
-                        if (err) {
-                            console.log(err);
-                        }
-                        res.redirect('/');
-                    });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return renderLoginError(errors.array()[0].msg);
+    }
+
+    // set by the email validator in routes/auth.js
+    const user = req.loginUser;
+    bcrypt
+        .compare(password, user.password)
+        .then((doMatch) => {
+            // will be true if passwords match, otherwise false
+            if (!doMatch) {
+                return renderLoginError('Invalid email or password.');
+            }
+            req.session.isLoggedIn = true;
+            // store a plain copy with ObjectIds as strings: the session store bundles an older
+            // bson version and refuses to save the ObjectIds of our mongoose version
+            // we share it across requests
+            req.session.user = user.toObject({ flattenObjectIds: true });
+            // make sure the session is written to MongoDB before we redirect
+            req.session.save((err) => {
+                if (err) {
+                    console.log(err);
                 }
-                res.redirect('/login');
-            })
-            .catch((err) => {
-                console.log(err);
-                req.flash('error', 'Invalid email or password');
-                res.redirect('/login');
+                res.redirect('/');
             });
-    });
+        })
+        .catch((err) => {
+            console.log(err);
+            renderLoginError('Invalid email or password.');
+        });
 };
 
 exports.postSignup = (req, res, next) => {
     // we want to store new user in the db
     const email = req.body.email;
     const password = req.body.password;
-    const confirmPassword = req.body.confirmPassword;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).render('auth/signup', {
@@ -95,36 +99,26 @@ exports.postSignup = (req, res, next) => {
         });
     }
 
-    User.findOne({ email })
-        .then((userDoc) => {
-            if (userDoc) {
-                req.flash('error', 'Email exists already, please pick a different one.');
-                return res.redirect('/signup');
-            }
-            // cannot be decrypted!!
-            return bcrypt.hash(password, 12).then((hashedPassword) => {
-                const user = new User({
-                    email,
-                    password: hashedPassword,
-                    cart: { items: [] },
-                });
-                return user
-                    .save()
-                    .then((result) => {
-                        res.redirect('/login');
-                        return transporter.sendMail({
-                            to: email,
-                            from: process.env.MAIL_FROM,
-                            subject: 'Signup succeeded',
-                            html: '<h1>You successfully signed up!</h1>',
-                        });
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                    });
+    // cannot be decrypted!!
+    bcrypt
+        .hash(password, 12)
+        .then((hashedPassword) => {
+            const user = new User({
+                email,
+                password: hashedPassword,
+                cart: { items: [] },
+            });
+            return user.save();
+        })
+        .then((result) => {
+            res.redirect('/login');
+            return transporter.sendMail({
+                to: email,
+                from: process.env.MAIL_FROM,
+                subject: 'Signup succeeded',
+                html: '<h1>You successfully signed up!</h1>',
             });
         })
-
         .catch((err) => console.log(err));
 };
 
