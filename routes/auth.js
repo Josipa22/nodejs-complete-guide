@@ -14,18 +14,17 @@ router.post(
     '/login',
     body('email', 'Please enter a valid email.')
         .isEmail()
+        .normalizeEmail()
         .custom(async (value, { req }) => {
-            const user = await User.findOne({ email: value });
-            if (!user) {
-                throw new Error('Invalid email or password.');
-            }
-            // hand the found user to the controller so it doesn't query again
-            req.loginUser = user;
+            // hand the found user (or null) to the controller so it doesn't query again;
+            // the controller decides what a missing user means
+            req.loginUser = await User.findOne({ email: value });
         }),
     body(
         'password',
         'Please enter a password with only numbers and text and at least 5 characters.',
     )
+        .trim()
         .isLength({ min: 5 })
         .isAlphanumeric(),
     authController.postLogin,
@@ -36,6 +35,7 @@ router.post(
     check('email')
         .isEmail()
         .withMessage('Please enter a valid email.')
+        .normalizeEmail()
         .custom(async (value, { req }) => {
             const user = await User.findOne({ email: value });
             if (user) {
@@ -46,14 +46,17 @@ router.post(
         'password',
         'Please enter a password with only numbers and text and at least 5 characters.',
     )
+        .trim()
         .isLength({ min: 5 })
         .isAlphanumeric(),
-    body('confirmPassword').custom((value, { req }) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords have to match!');
-        }
-        return true;
-    }),
+    body('confirmPassword')
+        .trim()
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords have to match!');
+            }
+            return true;
+        }),
     authController.postSignup,
 );
 

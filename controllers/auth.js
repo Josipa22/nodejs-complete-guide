@@ -27,6 +27,11 @@ exports.getLogin = (req, res, next) => {
         path: '/login',
         pageTitle: 'Login',
         errorMessage: message,
+        oldInput: {
+            email: '',
+            password: '',
+        },
+        validationErrors: [],
     });
 };
 
@@ -41,31 +46,48 @@ exports.getSignup = (req, res, next) => {
         path: '/signup',
         pageTitle: 'Signup',
         errorMessage: message,
+        oldInput: {
+            email: '',
+            password: '',
+            confirmPassword: '',
+        },
+        validationErrors: [],
     });
 };
 
 exports.postLogin = (req, res, next) => {
+    const email = req.body.email;
     const password = req.body.password;
-    const renderLoginError = (message) =>
+    const errors = validationResult(req);
+    const renderLoginError = (message, validationErrors) =>
         res.status(422).render('auth/login', {
             path: '/login',
             pageTitle: 'Login',
             errorMessage: message,
+            oldInput: {
+                email,
+                password,
+            },
+            validationErrors,
         });
+    // wrong email or password: show the message, but only failed validation gets a red border
+    const renderInvalidCredentials = () => renderLoginError('Invalid email or password.', []);
 
-    const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return renderLoginError(errors.array()[0].msg);
+        return renderLoginError(errors.array()[0].msg, errors.array());
     }
 
     // set by the email validator in routes/auth.js
     const user = req.loginUser;
+    if (!user) {
+        return renderInvalidCredentials();
+    }
     bcrypt
         .compare(password, user.password)
         .then((doMatch) => {
             // will be true if passwords match, otherwise false
             if (!doMatch) {
-                return renderLoginError('Invalid email or password.');
+                return renderInvalidCredentials();
             }
             req.session.isLoggedIn = true;
             // store a plain copy with ObjectIds as strings: the session store bundles an older
@@ -82,7 +104,7 @@ exports.postLogin = (req, res, next) => {
         })
         .catch((err) => {
             console.log(err);
-            renderLoginError('Invalid email or password.');
+            renderInvalidCredentials();
         });
 };
 
@@ -96,6 +118,8 @@ exports.postSignup = (req, res, next) => {
             path: '/signup',
             pageTitle: 'Signup',
             errorMessage: errors.array()[0].msg,
+            oldInput: { email, password, confirmPassword: req.body.confirmPassword },
+            validationErrors: errors.array(),
         });
     }
 
